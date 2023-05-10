@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestGetProduct(t *testing.T) {
+func TestGetManyProduct(t *testing.T) {
 	type args struct {
 		url     string
 		method  string
@@ -20,12 +20,12 @@ func TestGetProduct(t *testing.T) {
 		args      args
 		code      int
 		isProduct bool
-		res       map[string]any
+		res       []map[string]any
 	}{
 		{
-			name: "GET an existing product returns it",
+			name: "GET 2 products returns the first two",
 			args: args{
-				url:    "/product/id1",
+				url:    "/product?limit=2",
 				method: "GET",
 				inStore: []map[string]any{
 					{
@@ -33,26 +33,31 @@ func TestGetProduct(t *testing.T) {
 						"price":       1.0,
 						"description": "valid description",
 					},
+					{
+						"id":          "id2",
+						"price":       1.0,
+						"description": "valid description",
+					},
+					{
+						"id":          "id3",
+						"price":       1.0,
+						"description": "valid description",
+					},
 				},
 			},
 			code:      200,
 			isProduct: true,
-			res: map[string]any{
-				"ID":          "id1",
-				"Price":       1.0,
-				"Description": "valid description",
-			},
-		},
-		{
-			name: "GET an inexistent products returns not found",
-			args: args{
-				url:    "/product/id1",
-				method: "GET",
-			},
-			code:      404,
-			isProduct: false,
-			res: map[string]any{
-				"error": "not found",
+			res: []map[string]any{
+				{
+					"ID":          "id1",
+					"Price":       1.0,
+					"Description": "valid description",
+				},
+				{
+					"ID":          "id2",
+					"Price":       1.0,
+					"Description": "valid description",
+				},
 			},
 		},
 	}
@@ -68,13 +73,15 @@ func TestGetProduct(t *testing.T) {
 			router.ServeHTTP(w, req)
 
 			assert.Equal(t, tt.code, w.Code)
-			var actual map[string]any
+			var actual []map[string]any
 			err := json.Unmarshal(w.Body.Bytes(), &actual)
 			if err != nil {
 				t.Errorf("Unexpected error during unmarshaling of the response: %v", err)
 			}
 			if tt.isProduct {
-				assert.Equal(t, true, compareProductResponses(actual, tt.res))
+				for i, r := range tt.res {
+					assert.Equal(t, true, compareProductResponses(actual[i], r))
+				}
 			} else {
 				assert.Equal(t, actual, tt.res)
 			}

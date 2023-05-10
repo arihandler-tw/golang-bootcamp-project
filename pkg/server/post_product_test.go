@@ -98,7 +98,3 @@ func TestPostProduct(t *testing.T) {
 		})
 	}
 }
-
-func compareProductResponses(p1, p2 map[string]any) bool {
-	return p1["ID"] == p2["ID"] && p1["Price"] == p2["Price"] && p1["Description"] == p2["Description"]
-}
