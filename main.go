@@ -1,6 +1,8 @@
 package main
 
-import "gin-exercise/pkg/server"
+import (
+	"gin-exercise/pkg/server"
+)
 
 func main() {
 	router := server.SetupRoutes()

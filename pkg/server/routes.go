@@ -14,7 +14,7 @@ type prodReq struct {
 
 func postHandler(context *gin.Context, repository *product.Repository, id *string) {
 	req := prodReq{}
-	err := context.BindJSON(req)
+	err := context.BindJSON(&req)
 	if err != nil {
 		context.AbortWithStatusJSON(
 			http.StatusBadRequest,
