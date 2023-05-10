@@ -1,4 +1,4 @@
-package db
+package product
 
 import (
 	"fmt"

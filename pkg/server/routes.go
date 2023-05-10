@@ -1,11 +1,8 @@
 package server
 
 import (
-	"errors"
-	"gin-exercise/pkg/db"
 	"gin-exercise/pkg/product"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -39,24 +36,31 @@ func postHandler(context *gin.Context, repository *product.Repository, id *strin
 	context.JSON(http.StatusOK, prod)
 }
 
-func getHandler(context *gin.Context, repo *gorm.DB) {
+func getHandler(context *gin.Context, repo *product.DBRepository) {
 	id := context.Param("id")
 
-	var prdEnt db.ProductEntity
-	found := repo.First(&prdEnt, "id = ?", id)
-
-	if errors.Is(found.Error, gorm.ErrRecordNotFound) {
+	prod, found := repo.Find(id)
+	if found == false {
 		context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
+	context.JSON(http.StatusOK, prod)
 
-	if err := found.Error; err != nil {
-		context.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
-
-	toProduct, _ := prdEnt.ToProduct()
-	context.JSON(http.StatusOK, toProduct)
+	//var prdEnt product.ProductEntity
+	//found := repo.First(&prdEnt, "id = ?", id)
+	//
+	//if errors.Is(found.Error, gorm.ErrRecordNotFound) {
+	//	context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
+	//	return
+	//}
+	//
+	//if err := found.Error; err != nil {
+	//	context.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	//	return
+	//}
+	//
+	//toProduct, _ := prdEnt.ToProduct()
+	//context.JSON(http.StatusOK, toProduct)
 }
 
 func getManyHandler(context *gin.Context, repo *product.Repository) {
@@ -92,7 +96,7 @@ func deleteHandler(context *gin.Context, repo *product.Repository) {
 
 func SetupRoutes() *gin.Engine {
 	prodRepo := product.NewProductRepository()
-	database := db.ProductsDatabase()
+	database := product.NewProductsDatabase()
 
 	router := gin.Default()
 	router.POST("/product/:id", func(context *gin.Context) {
