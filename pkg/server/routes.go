@@ -12,7 +12,7 @@ type prodReq struct {
 	Description string  `json:"description" binding:"required"`
 }
 
-func postHandler(context *gin.Context, repository *product.Repository, id *string) {
+func postHandler(context *gin.Context, repository *product.DBRepository, id *string) {
 	req := prodReq{}
 	err := context.BindJSON(&req)
 	if err != nil {
@@ -45,22 +45,6 @@ func getHandler(context *gin.Context, repo *product.DBRepository) {
 		return
 	}
 	context.JSON(http.StatusOK, prod)
-
-	//var prdEnt product.ProductEntity
-	//found := repo.First(&prdEnt, "id = ?", id)
-	//
-	//if errors.Is(found.Error, gorm.ErrRecordNotFound) {
-	//	context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
-	//	return
-	//}
-	//
-	//if err := found.Error; err != nil {
-	//	context.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-	//	return
-	//}
-	//
-	//toProduct, _ := prdEnt.ToProduct()
-	//context.JSON(http.StatusOK, toProduct)
 }
 
 func getManyHandler(context *gin.Context, repo *product.Repository) {
@@ -101,11 +85,11 @@ func SetupRoutes() *gin.Engine {
 	router := gin.Default()
 	router.POST("/product/:id", func(context *gin.Context) {
 		idParam := context.Param("id")
-		postHandler(context, prodRepo, &idParam)
+		postHandler(context, database, &idParam)
 	})
 
 	router.POST("/product", func(context *gin.Context) {
-		postHandler(context, prodRepo, nil)
+		postHandler(context, database, nil)
 	})
 
 	router.GET("/product/:id", func(context *gin.Context) {

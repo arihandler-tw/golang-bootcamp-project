@@ -1,12 +1,3 @@
-### Send valid POST request with json body
-POST localhost:8080/product/id1
-Content-Type: application/json
-
-{
-  "price":1.0,
-  "description": "valid description"
-}
-
 ### GET product by id
-GET localhost:8080/product/id1
+GET localhost:8080/product/id2
 Content-Type: application/json
