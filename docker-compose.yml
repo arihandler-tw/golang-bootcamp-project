@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: s3cr3t
+      POSTGRES_DB: products
+    ports:
+      - "5432:5432"

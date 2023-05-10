@@ -1,3 +1,7 @@
+DELETE localhost:8080/product/chdkcsoah6b7grms29a0
+Accept: application/json
+
+###
 ### Send valid POST request with json body
 POST localhost:8080/product/id1
 Content-Type: application/json
@@ -24,6 +28,8 @@ Content-Type: application/json
   "price": 1.0,
   "description": "valid description"
 }
+
+
 
 ### Send POST without id
 POST localhost:8080/product/

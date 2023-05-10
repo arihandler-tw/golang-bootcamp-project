@@ -1,8 +1,11 @@
 package server
 
 import (
+	"errors"
+	"gin-exercise/pkg/db"
 	"gin-exercise/pkg/product"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -36,15 +39,23 @@ func postHandler(context *gin.Context, repository *product.Repository, id *strin
 	context.JSON(http.StatusOK, prod)
 }
 
-func getHandler(context *gin.Context, repo *product.Repository) {
+func getHandler(context *gin.Context, repo *gorm.DB) {
 	id := context.Param("id")
 
-	prod, found := repo.Find(id)
-	if found {
-		context.JSON(http.StatusOK, prod)
+	var prdEnt db.ProductEntity
+	found := repo.First(&prdEnt, "id = ?", id)
+
+	if errors.Is(found.Error, gorm.ErrRecordNotFound) {
+		context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
 		return
 	}
-	context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
+
+	if err := found.Error; err != nil {
+		context.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	context.JSON(http.StatusOK, prdEnt)
 }
 
 func getManyHandler(context *gin.Context, repo *product.Repository) {
@@ -72,7 +83,7 @@ func deleteHandler(context *gin.Context, repo *product.Repository) {
 
 	found := repo.Delete(id)
 	if found {
-		context.JSON(http.StatusAccepted, map[string]string{"op": "deleted"})
+		context.Status(http.StatusNoContent)
 		return
 	}
 	context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
@@ -80,6 +91,7 @@ func deleteHandler(context *gin.Context, repo *product.Repository) {
 
 func SetupRoutes() *gin.Engine {
 	prodRepo := product.NewProductRepository()
+	database := db.ProductsDatabase()
 
 	router := gin.Default()
 	router.POST("/product/:id", func(context *gin.Context) {
@@ -92,7 +104,7 @@ func SetupRoutes() *gin.Engine {
 	})
 
 	router.GET("/product/:id", func(context *gin.Context) {
-		getHandler(context, prodRepo)
+		getHandler(context, database)
 	})
 
 	router.GET("/product", func(context *gin.Context) {
