@@ -1,0 +1,65 @@
+### POST First product
+POST localhost:8080/product/id1
+Content-Type: application/json
+
+{
+  "price":1.0,
+  "description": "valid description"
+}
+
+### POST Second product
+POST localhost:8080/product/id2
+Content-Type: application/json
+
+{
+  "price":2.0,
+  "description": "valid description 2"
+}
+
+### POST Third product
+POST localhost:8080/product/id3
+Content-Type: application/json
+
+{
+  "price":3.0,
+  "description": "valid description 3"
+}
+
+### POST Fourth product
+POST localhost:8080/product/id4
+Content-Type: application/json
+
+{
+  "price":4.0,
+  "description": "valid description 4"
+}
+
+### POST Fifth product
+POST localhost:8080/product/id5
+Content-Type: application/json
+
+{
+  "price":5.0,
+  "description": "valid description 5"
+}
+
+### POST Sixth product
+POST localhost:8080/product/id6
+Content-Type: application/json
+
+{
+  "price":6.0,
+  "description": "valid description 6"
+}
+
+### GET many products with limit
+GET localhost:8080/product?limit=2
+Content-Type: application/json
+
+### GET many products with no limit
+GET localhost:8080/product
+Content-Type: application/json
+
+### GET many products with limit greater than products
+GET localhost:8080/product?limit=10
+Content-Type: application/json

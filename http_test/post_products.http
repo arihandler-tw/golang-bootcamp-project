@@ -1,0 +1,35 @@
+### Send valid POST request with json body
+POST localhost:8080/product/id1
+Content-Type: application/json
+
+{
+  "price": 1.0,
+  "description": "valid description"
+}
+
+### Send POST invalid
+POST localhost:8080/product/id2
+Content-Type: application/json
+
+{
+  "price": 1.0,
+  "description": "invalid description because it is way over the fifty char mark"
+}
+
+### Send POST invalid
+POST localhost:8080/product/id日本
+Content-Type: application/json
+
+{
+  "price": 1.0,
+  "description": "valid description"
+}
+
+### Send POST without id
+POST localhost:8080/product/
+Content-Type: application/json
+
+{
+  "price": 1.0,
+  "description": "valid description"
+}
