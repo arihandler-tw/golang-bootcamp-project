@@ -47,7 +47,7 @@ func getHandler(context *gin.Context, repo *product.DBRepository) {
 	context.JSON(http.StatusOK, prod)
 }
 
-func getManyHandler(context *gin.Context, repo *product.Repository) {
+func getManyHandler(context *gin.Context, repo *product.DBRepository) {
 	limitQueryParam := context.Query("limit")
 	if limitQueryParam == "" {
 		limitQueryParam = "5"
@@ -67,7 +67,7 @@ func getManyHandler(context *gin.Context, repo *product.Repository) {
 	context.JSON(http.StatusOK, res)
 }
 
-func deleteHandler(context *gin.Context, repo *product.Repository) {
+func deleteHandler(context *gin.Context, repo *product.DBRepository) {
 	id := context.Param("id")
 
 	found := repo.Delete(id)
@@ -79,7 +79,6 @@ func deleteHandler(context *gin.Context, repo *product.Repository) {
 }
 
 func SetupRoutes() *gin.Engine {
-	prodRepo := product.NewProductRepository()
 	database := product.NewProductsDatabase()
 
 	router := gin.Default()
@@ -97,11 +96,11 @@ func SetupRoutes() *gin.Engine {
 	})
 
 	router.GET("/product", func(context *gin.Context) {
-		getManyHandler(context, prodRepo)
+		getManyHandler(context, database)
 	})
 
 	router.DELETE("/product/:id", func(context *gin.Context) {
-		deleteHandler(context, prodRepo)
+		deleteHandler(context, database)
 	})
 	return router
 }

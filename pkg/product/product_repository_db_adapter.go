@@ -38,9 +38,25 @@ func (d *DBRepository) Find(id string) (*Product, bool) {
 }
 
 func (d *DBRepository) Delete(id string) bool {
-	return true
+	tx := d.db.Delete(&ProductEntity{}, "id = ?", id)
+	return tx.RowsAffected != 0
 }
 
 func (d *DBRepository) GetMany(amount int) ([]Product, error) {
-	return nil, nil
+	var entities []ProductEntity
+	tx := d.db.Limit(amount).Find(&entities)
+	if err := tx.Error; err != nil {
+		return nil, err
+	}
+
+	var products []Product
+	for _, entity := range entities {
+		product, err := entity.ToProduct()
+		if err != nil {
+			return nil, err
+		}
+		products = append(products, *product)
+	}
+
+	return products, nil
 }

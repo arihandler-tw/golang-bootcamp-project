@@ -1,0 +1,2 @@
+DELETE localhost:8080/product/id1
+Accept: application/json
