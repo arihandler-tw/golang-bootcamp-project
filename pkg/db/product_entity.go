@@ -12,11 +12,15 @@ type ProductEntity struct {
 	Description string
 }
 
-func ProductEntityFromProduct(product *product.Product) ProductEntity {
-	return ProductEntity{
+func ProductEntityFromProduct(product *product.Product) *ProductEntity {
+	return &ProductEntity{
 		ID:          product.ID,
 		CreatedAt:   product.Creation,
 		Price:       product.Price,
 		Description: product.Description,
 	}
+}
+
+func (p *ProductEntity) ToProduct() (*product.Product, error) {
+	return product.NewProduct(p.ID, p.Price, p.Description, p.CreatedAt)
 }

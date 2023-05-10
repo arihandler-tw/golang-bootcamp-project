@@ -55,7 +55,8 @@ func getHandler(context *gin.Context, repo *gorm.DB) {
 		return
 	}
 
-	context.JSON(http.StatusOK, prdEnt)
+	toProduct, _ := prdEnt.ToProduct()
+	context.JSON(http.StatusOK, toProduct)
 }
 
 func getManyHandler(context *gin.Context, repo *product.Repository) {
