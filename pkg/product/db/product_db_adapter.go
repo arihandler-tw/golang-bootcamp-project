@@ -28,7 +28,7 @@ func NewProductsDatabase() *Repository {
 
 func (d *Repository) Store(id *string, price float32, description string) (*model.Product, error) {
 	if id == nil {
-		id = util.GetPtr(generateNewId())
+		id = util.GetPtr(GenerateNewId())
 	}
 	newProduct, newErr := model.NewProduct(*id, price, description, time.Now())
 	if newErr != nil {
@@ -70,6 +70,6 @@ func (d *Repository) GetMany(amount int) ([]model.Product, error) {
 	return products, nil
 }
 
-func generateNewId() string {
+func GenerateNewId() string {
 	return xid.New().String()
 }

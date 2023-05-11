@@ -1,20 +1,56 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
 	"gin-exercise/pkg/product"
 	"gin-exercise/pkg/product/db"
+	"gin-exercise/pkg/util"
+	"github.com/Shopify/sarama"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
 	"strconv"
 )
 
-type prodReq struct {
+type ProdReq struct {
 	Price       float32 `json:"price" binding:"required"`
 	Description string  `json:"description" binding:"required"`
 }
 
+func postKafkaHandler(context *gin.Context, id *string) {
+	if id == nil {
+		id = util.GetPtr(db.GenerateNewId())
+	}
+	req := ProdReq{}
+	err := context.BindJSON(&req)
+	if err != nil {
+		context.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			map[string]string{"error": "malformed json"})
+		return
+	}
+
+	config := sarama.NewConfig()
+	p, err := sarama.NewAsyncProducer([]string{"localhost:9092"}, config)
+	if err != nil {
+		fmt.Printf("Failed to create producer: %s", err)
+		os.Exit(1)
+	}
+
+	body, _ := json.Marshal(req)
+
+	msg := sarama.ProducerMessage{
+		Topic: "products",
+		Key:   sarama.StringEncoder(*id),
+		Value: sarama.StringEncoder(body),
+	}
+
+	p.Input() <- &msg
+}
+
 func postHandler(context *gin.Context, repository *db.Repository, id *string) {
-	req := prodReq{}
+	req := ProdReq{}
 	err := context.BindJSON(&req)
 	if err != nil {
 		context.AbortWithStatusJSON(
@@ -89,7 +125,7 @@ func SetupRoutes() *gin.Engine {
 	})
 
 	router.POST("/product", func(context *gin.Context) {
-		postHandler(context, database, nil)
+		postKafkaHandler(context, nil)
 	})
 
 	router.GET("/product/:id", func(context *gin.Context) {
