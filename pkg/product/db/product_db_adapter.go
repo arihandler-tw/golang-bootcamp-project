@@ -3,6 +3,8 @@ package db
 import (
 	"errors"
 	"gin-exercise/pkg/product/model"
+	"gin-exercise/pkg/util"
+	"github.com/rs/xid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"time"
@@ -25,6 +27,9 @@ func NewProductsDatabase() *Repository {
 }
 
 func (d *Repository) Store(id *string, price float32, description string) (*model.Product, error) {
+	if id == nil {
+		id = util.GetPtr(generateNewId())
+	}
 	newProduct, newErr := model.NewProduct(*id, price, description, time.Now())
 	if newErr != nil {
 		return nil, newErr
@@ -63,4 +68,8 @@ func (d *Repository) GetMany(amount int) ([]model.Product, error) {
 	}
 
 	return products, nil
+}
+
+func generateNewId() string {
+	return xid.New().String()
 }

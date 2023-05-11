@@ -10,3 +10,7 @@ func (s Set) Present(v string) bool {
 	_, present := s[v]
 	return present
 }
+
+func GetPtr[T any](t T) *T {
+	return &t
+}
