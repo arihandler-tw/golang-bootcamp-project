@@ -1,5 +1,5 @@
 ### Send valid POST request with json body
-POST localhost:8080/product/id3
+POST localhost:8080/product/id2
 Content-Type: application/json
 
 {

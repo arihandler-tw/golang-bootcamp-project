@@ -1,19 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"gin-exercise/pkg/product/broker"
 	"gin-exercise/pkg/server"
 	"os"
 )
 
 func main() {
-	kc := os.Args[1]
-
-	if kc == "consumer" {
-		broker.Consumer()
-		os.Exit(0)
-	}
+	go broker.Consumer()
 
 	router := server.SetupRoutes()
-	router.Run("localhost:8080")
+	err := router.Run("localhost:8080")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "unable to run app: %v", err)
+		os.Exit(1)
+	}
 }

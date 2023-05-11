@@ -1,15 +1,11 @@
 package server
 
 import (
-	"encoding/json"
-	"fmt"
 	"gin-exercise/pkg/product"
+	"gin-exercise/pkg/product/broker"
 	"gin-exercise/pkg/product/db"
-	"gin-exercise/pkg/util"
-	"github.com/Shopify/sarama"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -18,10 +14,7 @@ type ProdReq struct {
 	Description string  `json:"description" binding:"required"`
 }
 
-func postKafkaHandler(context *gin.Context, id *string) {
-	if id == nil {
-		id = util.GetPtr(db.GenerateNewId())
-	}
+func postHandler(context *gin.Context, producer *broker.ProductEventProducer, id *string) {
 	req := ProdReq{}
 	err := context.BindJSON(&req)
 	if err != nil {
@@ -31,25 +24,11 @@ func postKafkaHandler(context *gin.Context, id *string) {
 		return
 	}
 
-	config := sarama.NewConfig()
-	p, err := sarama.NewAsyncProducer([]string{"localhost:9092"}, config)
-	if err != nil {
-		fmt.Printf("Failed to create producer: %s", err)
-		os.Exit(1)
-	}
-
-	body, _ := json.Marshal(req)
-
-	msg := sarama.ProducerMessage{
-		Topic: "products",
-		Key:   sarama.StringEncoder(*id),
-		Value: sarama.StringEncoder(body),
-	}
-
-	p.Input() <- &msg
+	producer.SendEvent(id, req.Price, req.Description)
+	context.Status(http.StatusAccepted)
 }
 
-func postHandler(context *gin.Context, repository *db.Repository, id *string) {
+func _postHandler(context *gin.Context, repository *db.Repository, id *string) {
 	req := ProdReq{}
 	err := context.BindJSON(&req)
 	if err != nil {
@@ -117,15 +96,19 @@ func deleteHandler(context *gin.Context, repo *db.Repository) {
 
 func SetupRoutes() *gin.Engine {
 	database := db.NewProductsDatabase()
+	producer, err := broker.NewEventProducer()
+	if err != nil {
+		panic("unable to create the event producer")
+	}
 
 	router := gin.Default()
 	router.POST("/product/:id", func(context *gin.Context) {
 		idParam := context.Param("id")
-		postHandler(context, database, &idParam)
+		postHandler(context, producer, &idParam)
 	})
 
 	router.POST("/product", func(context *gin.Context) {
-		postKafkaHandler(context, nil)
+		postHandler(context, producer, nil)
 	})
 
 	router.GET("/product/:id", func(context *gin.Context) {

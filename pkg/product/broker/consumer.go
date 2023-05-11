@@ -4,11 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"gin-exercise/pkg/product/db"
-	"gin-exercise/pkg/server"
 	"github.com/Shopify/sarama"
 	"log"
-	"os"
-	"os/signal"
 )
 
 func Consumer() {
@@ -23,8 +20,7 @@ func Consumer() {
 		}
 	}()
 
-	topic := "products"
-	partitionConsumer, err := consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
+	partitionConsumer, err := consumer.ConsumePartition(ProductsTopic, 0, sarama.OffsetNewest)
 	if err != nil {
 		panic(err)
 	}
@@ -35,39 +31,32 @@ func Consumer() {
 		}
 	}()
 
-	// Trap SIGINT to trigger a shutdown.
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
+	productsDatabase := db.NewProductsDatabase()
+	requested := 0
 
-	fmt.Printf("Creating database:...")
-	r := db.NewProductsDatabase()
-	fmt.Printf("Database created:...")
-	consumed := 0
-	notKilled := true
-
-	for notKilled {
+	for {
 		// blocks before select until there is a msg in at least one chan
 		select {
 		case msg := <-partitionConsumer.Messages():
 			log.Printf("Consumed message offset %d: '%s': '%s'\n", msg.Offset, string(msg.Key), msg.Value)
 
-			consumed++
+			requested++
 
-			k := string(msg.Key)
-			var p server.ProdReq
-			err := json.Unmarshal(msg.Value, &p)
+			var request ProductCreationRequest
+			err := json.Unmarshal(msg.Value, &request)
 
 			if err != nil {
 				fmt.Printf("Failed to unmarshall message: %s", err)
 				continue
 			}
 
-			r.Store(&k, p.Price, p.Description)
-
-		case <-signals:
-			notKilled = false
+			storedProduct, err := productsDatabase.Store(request.id, request.price, request.description)
+			if err != nil {
+				fmt.Printf("error during product store: %v", err)
+			}
+			fmt.Printf("product stored (%v)", storedProduct)
 		}
-	}
 
-	log.Printf("Consumed: %d\n", consumed)
+		log.Printf("Store product requests: %d\n", requested)
+	}
 }
