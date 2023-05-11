@@ -1,6 +1,7 @@
-package product
+package db
 
 import (
+	"gin-exercise/pkg/product/model"
 	"time"
 )
 
@@ -11,7 +12,7 @@ type ProductEntity struct {
 	Description string
 }
 
-func FromProduct(product *Product) *ProductEntity {
+func FromProduct(product *model.Product) *ProductEntity {
 	return &ProductEntity{
 		ID:          product.ID,
 		CreatedAt:   product.Creation,
@@ -20,6 +21,6 @@ func FromProduct(product *Product) *ProductEntity {
 	}
 }
 
-func (p *ProductEntity) ToProduct() (*Product, error) {
-	return NewProduct(p.ID, p.Price, p.Description, p.CreatedAt)
+func (p *ProductEntity) ToProduct() (*model.Product, error) {
+	return model.NewProduct(p.ID, p.Price, p.Description, p.CreatedAt)
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"gin-exercise/pkg/product"
+	"gin-exercise/pkg/product/db"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -12,7 +13,7 @@ type prodReq struct {
 	Description string  `json:"description" binding:"required"`
 }
 
-func postHandler(context *gin.Context, repository *product.DBRepository, id *string) {
+func postHandler(context *gin.Context, repository *db.Repository, id *string) {
 	req := prodReq{}
 	err := context.BindJSON(&req)
 	if err != nil {
@@ -36,7 +37,7 @@ func postHandler(context *gin.Context, repository *product.DBRepository, id *str
 	context.JSON(http.StatusOK, prod)
 }
 
-func getHandler(context *gin.Context, repo *product.DBRepository) {
+func getHandler(context *gin.Context, repo *db.Repository) {
 	id := context.Param("id")
 
 	prod, found := repo.Find(id)
@@ -47,7 +48,7 @@ func getHandler(context *gin.Context, repo *product.DBRepository) {
 	context.JSON(http.StatusOK, prod)
 }
 
-func getManyHandler(context *gin.Context, repo *product.DBRepository) {
+func getManyHandler(context *gin.Context, repo *db.Repository) {
 	limitQueryParam := context.Query("limit")
 	if limitQueryParam == "" {
 		limitQueryParam = "5"
@@ -67,7 +68,7 @@ func getManyHandler(context *gin.Context, repo *product.DBRepository) {
 	context.JSON(http.StatusOK, res)
 }
 
-func deleteHandler(context *gin.Context, repo *product.DBRepository) {
+func deleteHandler(context *gin.Context, repo *db.Repository) {
 	id := context.Param("id")
 
 	found := repo.Delete(id)
@@ -79,7 +80,7 @@ func deleteHandler(context *gin.Context, repo *product.DBRepository) {
 }
 
 func SetupRoutes() *gin.Engine {
-	database := product.NewProductsDatabase()
+	database := db.NewProductsDatabase()
 
 	router := gin.Default()
 	router.POST("/product/:id", func(context *gin.Context) {

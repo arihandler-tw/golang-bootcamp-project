@@ -1,4 +1,6 @@
-package product
+package inmemory
+
+import "gin-exercise/pkg/product/model"
 
 type Store[K comparable, V any] interface {
 	Find(id K) (*V, bool)
@@ -10,8 +12,8 @@ type MemStore[K comparable, V any] struct {
 	store map[K]V
 }
 
-func NewProductMemStore() Store[string, Product] {
-	return &MemStore[string, Product]{store: make(map[string]Product)}
+func NewProductMemStore() Store[string, model.Product] {
+	return &MemStore[string, model.Product]{store: make(map[string]model.Product)}
 }
 
 func (s *MemStore[K, V]) Find(id K) (*V, bool) {
