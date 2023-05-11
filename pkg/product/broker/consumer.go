@@ -50,7 +50,7 @@ func Consumer() {
 				continue
 			}
 
-			storedProduct, err := productsDatabase.Store(request.id, request.price, request.description)
+			storedProduct, err := productsDatabase.Store(request.Id, request.Price, request.Description)
 			if err != nil {
 				fmt.Printf("error during product store: %v", err)
 			}

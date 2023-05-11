@@ -23,11 +23,15 @@ func NewEventProducer() (*ProductEventProducer, error) {
 
 func (p ProductEventProducer) SendEvent(id *string, price float32, description string) {
 
-	body, _ := json.Marshal(ProductCreationRequest{
-		id:          id,
-		price:       price,
-		description: description,
+	body, err := json.Marshal(ProductCreationRequest{
+		Id:          id,
+		Price:       price,
+		Description: description,
 	})
+
+	if err != nil {
+		panic(err)
+	}
 
 	msg := sarama.ProducerMessage{
 		Topic: ProductsTopic,

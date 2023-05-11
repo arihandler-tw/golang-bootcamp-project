@@ -5,7 +5,7 @@ const (
 )
 
 type ProductCreationRequest struct {
-	id          *string
-	price       float32
-	description string
+	Id          *string
+	Price       float32
+	Description string
 }
