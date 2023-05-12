@@ -1,9 +1,9 @@
 package broker
 
 import (
-	"encoding/json"
 	"fmt"
 	"gin-exercise/pkg/product/db"
+	"gin-exercise/pkg/product/model"
 	"github.com/Shopify/sarama"
 	"log"
 )
@@ -20,43 +20,74 @@ func Consumer() {
 		}
 	}()
 
-	partitionConsumer, err := consumer.ConsumePartition(ProductsTopic, 0, sarama.OffsetNewest)
+	creationConsumer, err := consumer.ConsumePartition(ProductsCreationTopic, 0, sarama.OffsetNewest)
+	if err != nil {
+		panic(err)
+	}
+
+	deletionConsumer, err := consumer.ConsumePartition(ProductsDeletionTopic, 0, sarama.OffsetNewest)
 	if err != nil {
 		panic(err)
 	}
 
 	defer func() {
-		if err := partitionConsumer.Close(); err != nil {
+		if err := creationConsumer.Close(); err != nil {
+			log.Fatalln(err)
+		}
+		if err := deletionConsumer.Close(); err != nil {
 			log.Fatalln(err)
 		}
 	}()
 
 	productsDatabase := db.NewProductsDatabase()
-	requested := 0
 
 	for {
 		// blocks before select until there is a msg in at least one chan
 		select {
-		case msg := <-partitionConsumer.Messages():
-			log.Printf("Consumed message offset %d: '%s': '%s'\n", msg.Offset, string(msg.Key), msg.Value)
-
-			requested++
-
-			var request ProductCreationRequest
-			err := json.Unmarshal(msg.Value, &request)
-
-			if err != nil {
-				fmt.Printf("Failed to unmarshall message: %s", err)
+		case msg := <-creationConsumer.Messages():
+			log.Printf("Received creation event (%v|%v): %v", string(msg.Key), msg.Offset, string(msg.Value))
+			product, creationErr := handleCreationRequest(msg, productsDatabase)
+			if creationErr != nil {
+				log.Printf("[ERROR] creation of the product: %v", creationErr)
 				continue
 			}
+			log.Printf("Product created %v\n", product)
 
-			storedProduct, err := productsDatabase.Store(request.Id, request.Price, request.Description)
-			if err != nil {
-				fmt.Printf("error during product store: %v", err)
+		case msg := <-deletionConsumer.Messages():
+			log.Printf("Received deletion event (%v|%v): %v", string(msg.Key), msg.Offset, string(msg.Value))
+			deleted, deletionErr := handleDeletionRequest(msg, productsDatabase)
+			if deletionErr != nil {
+				log.Printf("[ERROR] deletion of the product: %v", deletionErr)
+				continue
 			}
-			fmt.Printf("product stored (%v)", storedProduct)
+			log.Printf("Product deleted %v\n", deleted)
 		}
-
-		log.Printf("Store product requests: %d\n", requested)
 	}
+}
+
+func handleCreationRequest(msg *sarama.ConsumerMessage, database *db.Repository) (prd *model.Product, err error) {
+	var request ProductCreationRequest
+	err = Unmarshal(msg.Value, &request)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal: %w", err)
+	}
+
+	prd, err = database.Store(request.Id, request.Price, request.Description)
+	if err != nil {
+		return nil, fmt.Errorf("could not store product: %w", err)
+	}
+	return prd, nil
+}
+
+func handleDeletionRequest(msg *sarama.ConsumerMessage, database *db.Repository) (deleted bool, err error) {
+	var request ProductDeletionRequest
+	err = Unmarshal(msg.Value, &request)
+
+	if err != nil {
+		return false, fmt.Errorf("could not unmarshal: %w", err)
+	}
+
+	deleted = database.Delete(request.Id)
+	return deleted, nil
 }

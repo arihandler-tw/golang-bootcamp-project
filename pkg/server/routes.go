@@ -1,7 +1,6 @@
 package server
 
 import (
-	"gin-exercise/pkg/product"
 	"gin-exercise/pkg/product/broker"
 	"gin-exercise/pkg/product/db"
 	"github.com/gin-gonic/gin"
@@ -24,32 +23,8 @@ func postHandler(context *gin.Context, producer *broker.ProductEventProducer, id
 		return
 	}
 
-	producer.SendEvent(id, req.Price, req.Description)
+	producer.SendCreationRequest(id, req.Price, req.Description)
 	context.Status(http.StatusAccepted)
-}
-
-func _postHandler(context *gin.Context, repository *db.Repository, id *string) {
-	req := ProdReq{}
-	err := context.BindJSON(&req)
-	if err != nil {
-		context.AbortWithStatusJSON(
-			http.StatusBadRequest,
-			map[string]string{"error": "malformed json"})
-		return
-	}
-
-	prod, repErr := repository.Store(id, req.Price, req.Description)
-	if repErr != nil {
-		errorPayload := map[string]string{"error": repErr.Error()}
-		httpStatus := http.StatusInternalServerError
-		if repErr.Error() == product.IdTakenError {
-			httpStatus = http.StatusBadRequest
-		}
-		context.AbortWithStatusJSON(httpStatus, errorPayload)
-		return
-	}
-
-	context.JSON(http.StatusOK, prod)
 }
 
 func getHandler(context *gin.Context, repo *db.Repository) {
@@ -83,15 +58,11 @@ func getManyHandler(context *gin.Context, repo *db.Repository) {
 	context.JSON(http.StatusOK, res)
 }
 
-func deleteHandler(context *gin.Context, repo *db.Repository) {
+func deleteHandler(context *gin.Context, producer *broker.ProductEventProducer) {
 	id := context.Param("id")
 
-	found := repo.Delete(id)
-	if found {
-		context.Status(http.StatusNoContent)
-		return
-	}
-	context.AbortWithStatusJSON(http.StatusNotFound, map[string]string{"error": "not found"})
+	producer.SendDeletionRequest(id)
+	context.Status(http.StatusAccepted)
 }
 
 func SetupRoutes() *gin.Engine {
@@ -120,7 +91,7 @@ func SetupRoutes() *gin.Engine {
 	})
 
 	router.DELETE("/product/:id", func(context *gin.Context) {
-		deleteHandler(context, database)
+		deleteHandler(context, producer)
 	})
 	return router
 }

@@ -21,7 +21,7 @@ func NewEventProducer() (*ProductEventProducer, error) {
 	}, nil
 }
 
-func (p ProductEventProducer) SendEvent(id *string, price float32, description string) {
+func (p ProductEventProducer) SendCreationRequest(id *string, price float32, description string) {
 
 	body, err := json.Marshal(ProductCreationRequest{
 		Id:          id,
@@ -33,8 +33,24 @@ func (p ProductEventProducer) SendEvent(id *string, price float32, description s
 		panic(err)
 	}
 
+	p.inputMessage(body, ProductsCreationTopic)
+}
+
+func (p ProductEventProducer) SendDeletionRequest(id string) {
+	body, err := json.Marshal(ProductDeletionRequest{
+		Id: id,
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	p.inputMessage(body, ProductsDeletionTopic)
+}
+
+func (p ProductEventProducer) inputMessage(body []byte, topic string) {
 	msg := sarama.ProducerMessage{
-		Topic: ProductsTopic,
+		Topic: topic,
 		Key:   sarama.StringEncoder(xid.New().String()),
 		Value: sarama.StringEncoder(body),
 	}
